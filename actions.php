@@ -28,14 +28,14 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS tamper_logs (
     UNIQUE(transaction_id, invalid_hash)
 )");
 
-// 2. Helper function to trigger n8n webhooks
-function triggerN8nWebhook($payload, $webhook_url = 'http://localhost:5678/webhook/erp-alerts') {
+// 2. Helper function to trigger Make.com cloud webhook
+function triggerMakeWebhook($payload, $webhook_url = 'https://hook.eu1.make.com/d858n8olj9732sfpbg213vua6qoqscml') {
     $ch = curl_init($webhook_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json', 'Accept: application/json']);
-    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1500);
+    curl_setopt($ch, CURLOPT_TIMEOUT_MS, 3000);
     curl_exec($ch);
     curl_close($ch);
 }
@@ -137,7 +137,7 @@ if ($action === 'delete_product' && $_SESSION['role'] === 'Admin') {
     exit;
 }
 
-// PROCESS CART WITH SHA-256 HASHING & WEBHOOKS
+// PROCESS CART WITH SHA-256 HASHING & MAKE.COM WEBHOOK
 if ($action === 'process_cart' && $_SESSION['role'] === 'Employee') {
     $cart_data = json_decode($_POST['cart_data'], true);
     if (empty($cart_data)) { header("Location: sales.php?error=Cart is empty"); exit; }
@@ -174,15 +174,17 @@ if ($action === 'process_cart' && $_SESSION['role'] === 'Employee') {
                 $stmt3 = $pdo->prepare("UPDATE products SET quantity = ? WHERE product_id = ?");
                 $stmt3->execute([$new_qty, $pid]);
 
+                // Dispatch alert to Make.com if stock drops to 5 units or lower
                 if ($new_qty <= 5) {
                     $payload = [
-                        'event' => 'low_stock_alert',
-                        'product_id' => $pid,
-                        'product_name' => $product['product_name'],
+                        'event'         => 'low_stock_alert',
+                        'product_id'    => $pid,
+                        'product_name'  => $product['product_name'],
                         'remaining_qty' => $new_qty,
-                        'timestamp' => date('c')
+                        'alert_type'    => 'LOW_STOCK_WARNING',
+                        'timestamp'     => date('Y-m-d H:i:s')
                     ];
-                    triggerN8nWebhook($payload);
+                    triggerMakeWebhook($payload);
                 }
 
             } else { throw new Exception("Insufficient stock for one or more items."); }
@@ -268,13 +270,14 @@ if ($action === 'run_audit_sweep') {
 
     if ($new_tampers_found && count($tampered_transactions) > 0) {
         $payload = [
-            'event' => 'critical_tamper_alert',
-            'broadcast_all' => true,
-            'tampered_txns' => implode(", ", $tampered_transactions),
-            'timestamp' => date('c'),
-            'trigger_ip' => $_SERVER['REMOTE_ADDR']
+            'event'          => 'critical_tamper_alert',
+            'broadcast_all'  => true,
+            'tampered_txns'  => implode(", ", $tampered_transactions),
+            'alert_type'     => 'SECURITY_BREACH_DETECTED',
+            'timestamp'      => date('Y-m-d H:i:s'),
+            'trigger_ip'     => $_SERVER['REMOTE_ADDR']
         ];
-        triggerN8nWebhook($payload, 'http://localhost:5678/webhook/security-alerts');
+        triggerMakeWebhook($payload);
     }
 
     if (!empty($_SESSION['role'])) {
@@ -324,10 +327,25 @@ if ($action === 'ai_instant_restock' && $_SESSION['role'] === 'Admin') {
         $product_id = $_POST['product_id'];
         $quantity_to_add = $_POST['quantity'];
 
+        $stmt_get = $pdo->prepare("SELECT product_name, quantity FROM products WHERE product_id = ?");
+        $stmt_get->execute([$product_id]);
+        $product = $stmt_get->fetch();
+
         $stmt = $pdo->prepare("UPDATE products SET quantity = quantity + ? WHERE product_id = ?");
         $stmt->execute([$quantity_to_add, $product_id]);
 
         $pdo->commit();
+
+        // Dispatch alert to Make.com Webhook
+        $payload = [
+            'event'         => 'ai_alert_trigger',
+            'product_name'  => $product['product_name'] ?? 'Unknown Product', 
+            'current_stock' => (int)(($product['quantity'] ?? 0) + $quantity_to_add),
+            'alert_type'    => 'AI_INSTANT_RESTOCK_EXECUTED',
+            'timestamp'     => date('Y-m-d H:i:s')
+        ];
+        triggerMakeWebhook($payload);
+
         header("Location: run_ai.php"); 
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -341,12 +359,27 @@ if ($action === 'ai_profit_increase' && $_SESSION['role'] === 'Admin') {
     $pdo->beginTransaction();
     try {
         $product_id = $_POST['product_id'];
+
+        $stmt_get = $pdo->prepare("SELECT product_name, quantity FROM products WHERE product_id = ?");
+        $stmt_get->execute([$product_id]);
+        $product = $stmt_get->fetch();
         
         // Mathematically increase the selling price by exactly 5%
         $stmt = $pdo->prepare("UPDATE products SET selling_price = selling_price * 1.05 WHERE product_id = ?");
         $stmt->execute([$product_id]);
 
         $pdo->commit();
+
+        // Dispatch alert to Make.com Webhook
+        $payload = [
+            'event'         => 'ai_alert_trigger',
+            'product_name'  => $product['product_name'] ?? 'Unknown Product', 
+            'current_stock' => (int)($product['quantity'] ?? 0),
+            'alert_type'    => 'AI_PROFIT_INCREASE_APPLIED',
+            'timestamp'     => date('Y-m-d H:i:s')
+        ];
+        triggerMakeWebhook($payload);
+
         // Rerun the AI instantly so the Opportunity card disappears from the dashboard
         header("Location: run_ai.php"); 
     } catch (Exception $e) {

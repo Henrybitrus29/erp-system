@@ -1,8 +1,8 @@
 <?php
-$host = 'localhost';
-$db   = 'erp_system';
-$user = 'root';
-$pass = ''; // Default XAMPP password is empty
+$host = 'sql208.infinityfree.com';
+$db   = 'if0_42627768_erp';
+$user = 'if0_42627768';
+$pass = 'PASTE_YOUR_COPIED_PASSWORD_HERE'; // Replace this with your actual InfinityFree password!
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);

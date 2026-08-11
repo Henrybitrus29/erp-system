@@ -24,7 +24,7 @@ foreach ($products as $row) {
         'daily_sales' => $daily_sales_avg
     ];
 
-    $ch = curl_init('http://127.0.0.1:5000/analyze');
+    $ch = curl_init('https://erp-system-e7dz.onrender.com/analyze');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
