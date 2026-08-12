@@ -35,13 +35,24 @@ try {
     try { $pdo->exec("ALTER TABLE sales ADD COLUMN hash_signature VARCHAR(64) NULL"); } catch (PDOException $e) {}
     try { $pdo->exec("ALTER TABLE sales ADD COLUMN sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
 
-    // 4. PROCUREMENT TABLE PATCH
-    $pdo->exec("CREATE TABLE IF NOT EXISTS procurement (id INT AUTO_INCREMENT PRIMARY KEY, supplier VARCHAR(255) NOT NULL, product_id INT NOT NULL)");
-    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN quantity INT NOT NULL DEFAULT 0"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN total DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN status VARCHAR(50) DEFAULT 'Completed'"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
+    // 4. PROCUREMENT TABLE SMART-NUKE
+    try {
+        // Test if the perfect 'id' column exists
+        $pdo->query("SELECT id FROM procurement LIMIT 1");
+    } catch (PDOException $e) {
+        // If it fails, the table is old/broken. Destroy and rebuild it flawlessly.
+        $pdo->exec("DROP TABLE IF EXISTS procurement");
+        $pdo->exec("CREATE TABLE procurement (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            supplier VARCHAR(255) NOT NULL,
+            product_id INT NOT NULL,
+            quantity INT NOT NULL,
+            unit_price DECIMAL(12,2) NOT NULL,
+            total DECIMAL(12,2) NOT NULL,
+            status VARCHAR(50) DEFAULT 'Completed',
+            date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+    }
 
     // 5. DROP CONFLICTING PYTHON TRIGGERS
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
