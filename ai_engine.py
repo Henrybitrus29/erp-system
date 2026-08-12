@@ -1,7 +1,12 @@
+import os
+import mysql.connector
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# ==========================================
+# ROUTE 1: AI INVENTORY ANALYSIS (Original)
+# ==========================================
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data = request.json
@@ -37,5 +42,72 @@ def analyze():
     else:
         return jsonify({"status": "ignore"})
 
+
+# ==========================================
+# ROUTE 2: MAKE.COM WEBHOOK (New Cloud Pipeline)
+# ==========================================
+@app.route('/api/webhook', methods=['POST'])
+def restock_webhook():
+    # 1. Security Check: Validate Make.com
+    auth_header = request.headers.get('Authorization')
+    if auth_header != 'Bearer CHIDAMA-TECH-KEY-2026':
+        return jsonify({'status': 'error', 'message': 'Unauthorized Access'}), 401
+
+    # 2. Extract Data from Make.com
+    data = request.get_json()
+    product_id = data.get('product_id')
+    quantity = data.get('quantity')
+    supplier = data.get('supplier', 'Telegram Automated Order')
+
+    if not product_id or not quantity:
+        return jsonify({'status': 'error', 'message': 'Missing product_id or quantity'}), 400
+
+    try:
+        # 3. Connect to your NEW API-Friendly Cloud Database
+        # (Replace these with your actual cloud DB credentials once you migrate from InfinityFree)
+        conn = mysql.connector.connect(
+            host="YOUR_NEW_CLOUD_DB_HOST",
+            user="YOUR_DB_USER",
+            password="YOUR_DB_PASSWORD",
+            database="erp_system"
+        )
+        cursor = conn.cursor(dictionary=True)
+
+        # 4. Process the Restock
+        cursor.execute("SELECT product_name, cost_price FROM products WHERE product_id = %s", (product_id,))
+        product = cursor.fetchone()
+
+        if not product:
+            return jsonify({'status': 'error', 'message': 'Product not found'}), 404
+
+        unit_price = product['cost_price']
+        total_cost = unit_price * int(quantity)
+
+        # 5. Update Database Tables
+        cursor.execute(
+            "INSERT INTO procurement (supplier, product_id, quantity, unit_price, total, status) VALUES (%s, %s, %s, %s, %s, 'Completed')",
+            (supplier, product_id, quantity, unit_price, total_cost)
+        )
+        
+        cursor.execute(
+            "UPDATE products SET quantity = quantity + %s WHERE product_id = %s",
+            (quantity, product_id)
+        )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # 6. Return Success to Make.com
+        return jsonify({
+            'status': 'success',
+            'message': f'Successfully restocked {quantity} units of {product["product_name"]}'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
 if __name__ == '__main__':
-    app.run(port=5000)
+    # host='0.0.0.0' is required for Render to expose the server to the internet
+    app.run(host='0.0.0.0', port=5000)
