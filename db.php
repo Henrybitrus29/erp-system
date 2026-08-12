@@ -1,12 +1,16 @@
 <?php
-$host = 'sql208.infinityfree.com';
-$db   = 'if0_42627768_erp';
-$user = 'if0_42627768';
-$pass = 'PASTE_YOUR_COPIED_PASSWORD_HERE'; // Replace this with your actual InfinityFree password!
+$host = getenv('DB_HOST') ?: 'mysql-16bf1a03-meshachsunday86-41c1.h.aivencloud.com';
+$port = getenv('DB_PORT') ?: 17867;
+$db   = getenv('DB_NAME') ?: 'defaultdb';
+$user = getenv('DB_USER') ?: 'avnadmin';
+$pass = getenv('DB_PASSWORD');
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4", $user, $pass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
