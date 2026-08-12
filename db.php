@@ -54,6 +54,15 @@ try {
         )");
     }
 
+    // 5. AI INSIGHTS TABLE PATCH
+    $pdo->exec("CREATE TABLE IF NOT EXISTS ai_insights (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        insight_type VARCHAR(50) NOT NULL,
+        recommendation TEXT NOT NULL,
+        status VARCHAR(20) DEFAULT 'Pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
     // 5. DROP CONFLICTING PYTHON TRIGGERS
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_delete"); } catch (PDOException $e) {}
