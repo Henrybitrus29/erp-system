@@ -52,15 +52,17 @@ try {
         )");
     }
 
-    // 5. AI INSIGHTS TABLE CREATION (Fixes run_ai.php crash)
+    // 5. AI INSIGHTS TABLE CREATION & PATCH (Fixed missing product_name)
     $pdo->exec("CREATE TABLE IF NOT EXISTS ai_insights (
         id INT AUTO_INCREMENT PRIMARY KEY,
         product_id INT NOT NULL,
+        product_name VARCHAR(255) NOT NULL,
         insight_type VARCHAR(50) NOT NULL,
         recommendation TEXT NOT NULL,
         status VARCHAR(20) DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
+    try { $pdo->exec("ALTER TABLE ai_insights ADD COLUMN product_name VARCHAR(255) NOT NULL AFTER product_id"); } catch (PDOException $e) {}
 
     // 6. DROP CONFLICTING PYTHON TRIGGERS
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
