@@ -11,63 +11,6 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
-
-    // 1. PRODUCTS TABLE PATCH
-    $pdo->exec("CREATE TABLE IF NOT EXISTS products (product_id INT AUTO_INCREMENT PRIMARY KEY, product_name VARCHAR(255) NOT NULL, quantity INT NOT NULL DEFAULT 0)");
-    try { $pdo->exec("ALTER TABLE products ADD COLUMN cost_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE products ADD COLUMN selling_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-
-    // 2. EMPLOYEES TABLE PATCH
-    $pdo->exec("CREATE TABLE IF NOT EXISTS employees (employee_id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)");
-    try { $pdo->exec("ALTER TABLE employees ADD COLUMN gender VARCHAR(50)"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE employees ADD COLUMN department VARCHAR(100)"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE employees ADD COLUMN phone_number VARCHAR(50)"); } catch (PDOException $e) {}
-
-    // 3. SALES TABLE PATCH
-    $pdo->exec("CREATE TABLE IF NOT EXISTS sales (sale_id INT AUTO_INCREMENT PRIMARY KEY, product_id INT NOT NULL, quantity_sold INT NOT NULL DEFAULT 0)");
-    try { $pdo->exec("ALTER TABLE sales CHANGE total_price total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales CHANGE quantity quantity_sold INT NOT NULL DEFAULT 0"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales CHANGE created_at sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN profit DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN employee_id INT NULL"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN previous_hash VARCHAR(64) NULL"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN hash_signature VARCHAR(64) NULL"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
-
-    // 4. PROCUREMENT TABLE SMART-NUKE
-    try {
-        $pdo->query("SELECT id FROM procurement LIMIT 1");
-    } catch (PDOException $e) {
-        $pdo->exec("DROP TABLE IF EXISTS procurement");
-        $pdo->exec("CREATE TABLE procurement (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            supplier VARCHAR(255) NOT NULL,
-            product_id INT NOT NULL,
-            quantity INT NOT NULL,
-            unit_price DECIMAL(12,2) NOT NULL,
-            total DECIMAL(12,2) NOT NULL,
-            status VARCHAR(50) DEFAULT 'Completed',
-            date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )");
-    }
-
-    // 5. AI INSIGHTS TABLE CREATION & PATCH (Fixed missing product_name)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS ai_insights (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        product_id INT NOT NULL,
-        product_name VARCHAR(255) NOT NULL,
-        insight_type VARCHAR(50) NOT NULL,
-        recommendation TEXT NOT NULL,
-        status VARCHAR(20) DEFAULT 'Pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
-    try { $pdo->exec("ALTER TABLE ai_insights ADD COLUMN product_name VARCHAR(255) NOT NULL AFTER product_id"); } catch (PDOException $e) {}
-
-    // 6. DROP CONFLICTING PYTHON TRIGGERS
-    try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
-    try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_delete"); } catch (PDOException $e) {}
-
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
