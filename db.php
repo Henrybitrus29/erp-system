@@ -12,43 +12,38 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 
-    // 1. CREATE TABLES (With the EXACT column names PHP wants)
-    $pdo->exec("CREATE TABLE IF NOT EXISTS employees (
-        employee_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        gender VARCHAR(50),
-        department VARCHAR(100),
-        phone_number VARCHAR(50)
-    )");
+    // 1. PRODUCTS TABLE PATCH
+    $pdo->exec("CREATE TABLE IF NOT EXISTS products (product_id INT AUTO_INCREMENT PRIMARY KEY, product_name VARCHAR(255) NOT NULL, quantity INT NOT NULL DEFAULT 0)");
+    try { $pdo->exec("ALTER TABLE products ADD COLUMN cost_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE products ADD COLUMN selling_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS products (
-        product_id INT AUTO_INCREMENT PRIMARY KEY,
-        product_name VARCHAR(255) NOT NULL,
-        quantity INT NOT NULL DEFAULT 0,
-        cost_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
-        selling_price DECIMAL(12,2) NOT NULL DEFAULT 0.00
-    )");
+    // 2. EMPLOYEES TABLE PATCH
+    $pdo->exec("CREATE TABLE IF NOT EXISTS employees (employee_id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)");
+    try { $pdo->exec("ALTER TABLE employees ADD COLUMN gender VARCHAR(50)"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE employees ADD COLUMN department VARCHAR(100)"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE employees ADD COLUMN phone_number VARCHAR(50)"); } catch (PDOException $e) {}
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS sales (
-        sale_id INT AUTO_INCREMENT PRIMARY KEY,
-        product_id INT NOT NULL,
-        employee_id INT NULL,
-        quantity_sold INT NOT NULL,
-        total_amount DECIMAL(12,2) NOT NULL,
-        profit DECIMAL(12,2) NOT NULL,
-        previous_hash VARCHAR(64) NULL,
-        hash_signature VARCHAR(64) NULL,
-        sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // 2. THE PERMANENT FIX: Brute-force rename all old Python columns to PHP columns
+    // 3. SALES TABLE PATCH
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sales (sale_id INT AUTO_INCREMENT PRIMARY KEY, product_id INT NOT NULL, quantity_sold INT NOT NULL DEFAULT 0)");
     try { $pdo->exec("ALTER TABLE sales CHANGE total_price total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
     try { $pdo->exec("ALTER TABLE sales CHANGE quantity quantity_sold INT NOT NULL DEFAULT 0"); } catch (PDOException $e) {}
     try { $pdo->exec("ALTER TABLE sales CHANGE created_at sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE sales ADD COLUMN employee_id INT NULL"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
     try { $pdo->exec("ALTER TABLE sales ADD COLUMN profit DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN employee_id INT NULL"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN previous_hash VARCHAR(64) NULL"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN hash_signature VARCHAR(64) NULL"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN sale_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
 
-    // 3. Drop old Python triggers that might crash during transactions
+    // 4. PROCUREMENT TABLE PATCH
+    $pdo->exec("CREATE TABLE IF NOT EXISTS procurement (id INT AUTO_INCREMENT PRIMARY KEY, supplier VARCHAR(255) NOT NULL, product_id INT NOT NULL)");
+    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN quantity INT NOT NULL DEFAULT 0"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN total DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN status VARCHAR(50) DEFAULT 'Completed'"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE procurement ADD COLUMN date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
+
+    // 5. DROP CONFLICTING PYTHON TRIGGERS
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_delete"); } catch (PDOException $e) {}
 
