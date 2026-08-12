@@ -37,10 +37,8 @@ try {
 
     // 4. PROCUREMENT TABLE SMART-NUKE
     try {
-        // Test if the perfect 'id' column exists
         $pdo->query("SELECT id FROM procurement LIMIT 1");
     } catch (PDOException $e) {
-        // If it fails, the table is old/broken. Destroy and rebuild it flawlessly.
         $pdo->exec("DROP TABLE IF EXISTS procurement");
         $pdo->exec("CREATE TABLE procurement (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,7 +52,7 @@ try {
         )");
     }
 
-    // 5. AI INSIGHTS TABLE PATCH
+    // 5. AI INSIGHTS TABLE CREATION (Fixes run_ai.php crash)
     $pdo->exec("CREATE TABLE IF NOT EXISTS ai_insights (
         id INT AUTO_INCREMENT PRIMARY KEY,
         product_id INT NOT NULL,
@@ -63,7 +61,8 @@ try {
         status VARCHAR(20) DEFAULT 'Pending',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
-    // 5. DROP CONFLICTING PYTHON TRIGGERS
+
+    // 6. DROP CONFLICTING PYTHON TRIGGERS
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
     try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_delete"); } catch (PDOException $e) {}
 
