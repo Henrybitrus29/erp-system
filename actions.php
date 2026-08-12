@@ -1,5 +1,4 @@
-﻿<?php
-session_start();
+﻿<?php ob_start(); session_start();
 require 'db.php';
 
 // Auto-create users table if missing on Aiven Cloud
