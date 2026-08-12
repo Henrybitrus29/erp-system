@@ -63,12 +63,12 @@ def restock_webhook():
         return jsonify({'status': 'error', 'message': 'Missing product_id or quantity'}), 400
 
     try:
-        # 3. Connect to your Live Aiven Cloud Database
+        # 3. Connect to your Live Aiven Cloud Database securely
         conn = mysql.connector.connect(
             host="mysql-16bf1a03-meshachsunday86-41c1.h.aivencloud.com",
             port=17867,
             user="avnadmin",
-            password="YOUR_AIVEN_PASSWORD_HERE",  # <-- Replace with your actual Aiven password
+            password=os.getenv('DB_PASSWORD'),  # <-- Secure environment variable
             database="defaultdb"
         )
         cursor = conn.cursor(dictionary=True)
