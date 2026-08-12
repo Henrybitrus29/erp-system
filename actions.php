@@ -1,32 +1,40 @@
 ﻿<?php
-require 'db.php';
 session_start();
+require 'db.php';
 
 // 1. Ensure required database tables and columns exist
-$pdo->exec("CREATE TABLE IF NOT EXISTS procurement (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    supplier VARCHAR(255) NOT NULL,
-    product_id INT NOT NULL,
-    quantity INT NOT NULL,
-    unit_price DECIMAL(12,2) NOT NULL,
-    total DECIMAL(12,2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'Completed',
-    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS procurement (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        supplier VARCHAR(255) NOT NULL,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        unit_price DECIMAL(12,2) NOT NULL,
+        total DECIMAL(12,2) NOT NULL,
+        status VARCHAR(50) DEFAULT 'Completed',
+        date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (PDOException $e) {}
 
-$pdo->exec("ALTER TABLE sales 
-    ADD COLUMN IF NOT EXISTS previous_hash VARCHAR(64) NULL,
-    ADD COLUMN IF NOT EXISTS hash_signature VARCHAR(64) NULL
-");
+// Safe column additions compatible with standard MySQL syntax
+try {
+    $pdo->exec("ALTER TABLE sales ADD COLUMN previous_hash VARCHAR(64) NULL");
+} catch (PDOException $e) {}
 
-$pdo->exec("CREATE TABLE IF NOT EXISTS tamper_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    transaction_id VARCHAR(50),
-    invalid_hash VARCHAR(64),
-    issue_detected VARCHAR(255),
-    logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(transaction_id, invalid_hash)
-)");
+try {
+    $pdo->exec("ALTER TABLE sales ADD COLUMN hash_signature VARCHAR(64) NULL");
+} catch (PDOException $e) {}
+
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS tamper_logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        transaction_id VARCHAR(50),
+        invalid_hash VARCHAR(64),
+        issue_detected VARCHAR(255),
+        logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(transaction_id, invalid_hash)
+    )");
+} catch (PDOException $e) {}
 
 // 2. Helper function to trigger Make.com cloud webhook
 function triggerMakeWebhook($payload, $webhook_url = 'https://hook.eu1.make.com/d858n8olj9732sfpbg213vua6qoqscml') {
