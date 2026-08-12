@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 ob_start();
 session_start();
 require 'db.php';
@@ -445,3 +445,4 @@ if (isset($_GET['logout'])) {
 header("Location: index.php");
 exit;
 ?>
+<!-- Forced Update 639221660619142074 -->
