@@ -11,6 +11,11 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+
+    // SILENTLY PATCH THE MISMATCHED COLUMN NAME
+    try { $pdo->exec("ALTER TABLE ai_insights CHANGE recommendation suggestion TEXT"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE ai_insights ADD COLUMN suggestion TEXT"); } catch (PDOException $e) {}
+
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
