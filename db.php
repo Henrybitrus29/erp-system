@@ -12,7 +12,7 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 
-    // Self-healing: Auto-create missing tables on Aiven Cloud
+    // 1. Auto-create missing tables on Aiven Cloud
     $pdo->exec("CREATE TABLE IF NOT EXISTS employees (
         employee_id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -40,6 +40,16 @@ try {
         hash_signature VARCHAR(64) NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
+
+    // 2. PATCH SCHEMA MISMATCH: Rename older Python columns to match the new PHP code
+    try { $pdo->exec("ALTER TABLE sales CHANGE total_price total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales CHANGE quantity quantity_sold INT NOT NULL DEFAULT 0"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN employee_id INT NULL"); } catch (PDOException $e) {}
+    try { $pdo->exec("ALTER TABLE sales ADD COLUMN profit DECIMAL(12,2) NOT NULL DEFAULT 0.00"); } catch (PDOException $e) {}
+
+    // 3. Drop old Python triggers temporarily so they don't crash due to the column renames
+    try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_update"); } catch (PDOException $e) {}
+    try { $pdo->exec("DROP TRIGGER IF EXISTS detect_sales_delete"); } catch (PDOException $e) {}
 
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
