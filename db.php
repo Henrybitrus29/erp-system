@@ -11,6 +11,36 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+
+    // Self-healing: Auto-create missing tables on Aiven Cloud
+    $pdo->exec("CREATE TABLE IF NOT EXISTS employees (
+        employee_id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        gender VARCHAR(50),
+        department VARCHAR(100),
+        phone_number VARCHAR(50)
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS products (
+        product_id INT AUTO_INCREMENT PRIMARY KEY,
+        product_name VARCHAR(255) NOT NULL,
+        quantity INT NOT NULL DEFAULT 0,
+        cost_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+        selling_price DECIMAL(12,2) NOT NULL DEFAULT 0.00
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS sales (
+        sale_id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        employee_id INT NULL,
+        quantity_sold INT NOT NULL,
+        total_amount DECIMAL(12,2) NOT NULL,
+        profit DECIMAL(12,2) NOT NULL,
+        previous_hash VARCHAR(64) NULL,
+        hash_signature VARCHAR(64) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
