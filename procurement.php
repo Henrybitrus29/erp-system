@@ -1,4 +1,4 @@
-﻿<?php 
+<?php 
 require 'db.php'; 
 session_start();
 // Security Redirect if Employee tries to access

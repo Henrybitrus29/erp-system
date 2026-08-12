@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     .sidebar { width: 260px; background-color: #0b0f19; color: #94a3b8; height: 100vh; position: fixed; left: 0; top: 0; display: flex; flex-direction: column; font-family: 'Inter', sans-serif; z-index: 1000; }
     .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 25px 20px; color: white; font-weight: 700; font-size: 1.25rem; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .brand-icon { width: 35px; height: 35px; background: linear-gradient(135deg, #6366f1, #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; }

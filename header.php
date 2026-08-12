@@ -1,4 +1,4 @@
-﻿<style>
+<style>
     .top-header { background: #ffffff; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); margin-bottom: 30px; border-radius: 12px; }
     .page-title { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.25rem; color: #1e293b; margin: 0; }
     .page-title i { color: #4f46e5; }

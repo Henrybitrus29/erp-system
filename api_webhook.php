@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * Sends a stock alert payload to Make.com Webhook
  *

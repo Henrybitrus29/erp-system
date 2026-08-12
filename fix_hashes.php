@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require 'db.php';
 
 echo "Recalculating Cryptographic Signatures for Existing Sales...\n";
