@@ -44,7 +44,7 @@ def analyze():
 
 
 # ==========================================
-# ROUTE 2: MAKE.COM WEBHOOK (New Cloud Pipeline)
+# ROUTE 2: MAKE.COM WEBHOOK (Aiven Cloud Pipeline)
 # ==========================================
 @app.route('/api/webhook', methods=['POST'])
 def restock_webhook():
@@ -63,13 +63,13 @@ def restock_webhook():
         return jsonify({'status': 'error', 'message': 'Missing product_id or quantity'}), 400
 
     try:
-        # 3. Connect to your NEW API-Friendly Cloud Database
-        # (Replace these with your actual cloud DB credentials once you migrate from InfinityFree)
+        # 3. Connect to your Live Aiven Cloud Database
         conn = mysql.connector.connect(
-            host="YOUR_NEW_CLOUD_DB_HOST",
-            user="YOUR_DB_USER",
-            password="YOUR_DB_PASSWORD",
-            database="erp_system"
+            host="mysql-16bf1a03-meshachsunday86-41c1.h.aivencloud.com",
+            port=17867,
+            user="avnadmin",
+            password="YOUR_AIVEN_PASSWORD_HERE",  # <-- Replace with your actual Aiven password
+            database="defaultdb"
         )
         cursor = conn.cursor(dictionary=True)
 
