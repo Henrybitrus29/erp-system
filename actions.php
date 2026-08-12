@@ -2,7 +2,24 @@
 session_start();
 require 'db.php';
 
-// 1. Ensure required database tables and columns exist
+// Auto-create users table if missing on Aiven Cloud
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(100) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) NOT NULL DEFAULT 'Admin',
+        employee_id INT NULL
+    )");
+
+    // Insert default admin account if table is empty
+    $checkUser = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    if ($checkUser == 0) {
+        $pdo->exec("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'Admin')");
+    }
+} catch (PDOException $e) {}
+
+// Auto-create procurement table if missing
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS procurement (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -36,7 +53,7 @@ try {
     )");
 } catch (PDOException $e) {}
 
-// 2. Helper function to trigger Make.com cloud webhook
+// Helper function to trigger Make.com cloud webhook
 function triggerMakeWebhook($payload, $webhook_url = 'https://hook.eu1.make.com/d858n8olj9732sfpbg213vua6qoqscml') {
     $ch = curl_init($webhook_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -182,7 +199,6 @@ if ($action === 'process_cart' && $_SESSION['role'] === 'Employee') {
                 $stmt3 = $pdo->prepare("UPDATE products SET quantity = ? WHERE product_id = ?");
                 $stmt3->execute([$new_qty, $pid]);
 
-                // Dispatch alert to Make.com if stock drops to 5 units or lower
                 if ($new_qty <= 5) {
                     $payload = [
                         'event'         => 'low_stock_alert',
@@ -344,7 +360,6 @@ if ($action === 'ai_instant_restock' && $_SESSION['role'] === 'Admin') {
 
         $pdo->commit();
 
-        // Dispatch alert to Make.com Webhook
         $payload = [
             'event'         => 'ai_alert_trigger',
             'product_name'  => $product['product_name'] ?? 'Unknown Product', 
@@ -372,13 +387,11 @@ if ($action === 'ai_profit_increase' && $_SESSION['role'] === 'Admin') {
         $stmt_get->execute([$product_id]);
         $product = $stmt_get->fetch();
         
-        // Mathematically increase the selling price by exactly 5%
         $stmt = $pdo->prepare("UPDATE products SET selling_price = selling_price * 1.05 WHERE product_id = ?");
         $stmt->execute([$product_id]);
 
         $pdo->commit();
 
-        // Dispatch alert to Make.com Webhook
         $payload = [
             'event'         => 'ai_alert_trigger',
             'product_name'  => $product['product_name'] ?? 'Unknown Product', 
@@ -388,7 +401,6 @@ if ($action === 'ai_profit_increase' && $_SESSION['role'] === 'Admin') {
         ];
         triggerMakeWebhook($payload);
 
-        // Rerun the AI instantly so the Opportunity card disappears from the dashboard
         header("Location: run_ai.php"); 
     } catch (Exception $e) {
         $pdo->rollBack();

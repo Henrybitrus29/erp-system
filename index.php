@@ -32,7 +32,6 @@ if (isset($_SESSION['loggedin'])) { header("Location: dashboard.php"); exit; }
         .btn-primary-custom:hover { background: #4338ca; }
         
         .presentation-area { flex: 1; display: flex; justify-content: center; align-items: center; }
-        /* Mockup container styled to look like the laptop in the photo */
         .laptop-mockup { width: 100%; max-width: 700px; height: 400px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; border-bottom: 15px solid #a855f7; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; display: flex; align-items: center; justify-content: center; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); position: relative; overflow: hidden; }
         .laptop-mockup::before { content: 'Dashboard Interface Preview'; color: rgba(255,255,255,0.5); font-weight: 600; font-size: 1.2rem; }
     </style>
@@ -77,7 +76,6 @@ if (isset($_SESSION['loggedin'])) { header("Location: dashboard.php"); exit; }
         </div>
         <div class="presentation-area d-none d-lg-flex">
             <div class="laptop-mockup">
-                <!-- In production, you would place an <img src="dashboard-preview.png"> here inside the laptop mockup screen -->
             </div>
         </div>
     </div>
