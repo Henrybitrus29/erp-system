@@ -12,9 +12,8 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
 
-    // SILENTLY PATCH THE MISMATCHED COLUMN NAME
-    try { $pdo->exec("ALTER TABLE ai_insights CHANGE recommendation suggestion TEXT"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE ai_insights ADD COLUMN suggestion TEXT"); } catch (PDOException $e) {}
+    // SILENTLY ADD THE FINAL MISSING AI COLUMN
+    try { $pdo->exec("ALTER TABLE ai_insights ADD COLUMN explanation TEXT"); } catch (PDOException $e) {}
 
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
