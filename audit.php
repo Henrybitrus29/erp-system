@@ -1,6 +1,5 @@
-<?php 
+<?php ob_start(); session_start();
 require 'db.php'; 
-session_start();
 if (!isset($_SESSION['loggedin']) || $_SESSION['role'] !== 'Admin') { 
     header("Location: dashboard.php"); 
     exit; 
@@ -60,7 +59,8 @@ $pageTitle = 'Security Audit';
                         
                         if (count($sales) > 0) {
                             foreach ($sales as $row) {
-                                $expected_data_string = $row['sale_id'] . $row['product_id'] . $row['employee_id'] . $row['quantity_sold'] . $row['total_amount'] . $row['previous_hash'];
+                                // Cast total_amount to float so it drops the .00 exactly like PHP did during checkout
+                                $expected_data_string = $row['sale_id'] . $row['product_id'] . $row['employee_id'] . $row['quantity_sold'] . (float)$row['total_amount'] . $row['previous_hash'];
                                 $calculated_hash = hash('sha256', $expected_data_string);
                                 $is_valid = ($calculated_hash === $row['hash_signature']);
 
