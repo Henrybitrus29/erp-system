@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 ob_start();
 session_start();
 require 'db.php';
@@ -201,13 +201,13 @@ if ($action === 'process_cart' && $_SESSION['role'] === 'Employee') {
                 $stmt3->execute([$new_qty, $pid]);
 
                 if ($new_qty <= 5) {
+                    // Forcefully construct the exact n8n string format
+                    $p_name = strtoupper($product['product_name']);
+                    $exact_message = "LOW STOCK ALERT! PRODUCT: {$p_name}, REMAINING UNIT: {$new_qty} UNITS , PRODUCT ID : {$pid} REPLY DIRECTLY TO THIS CHAT WITH : RESTOCK  QTY 60";
+                    
                     $payload = [
-                        'event'         => 'low_stock_alert',
-                        'product_id'    => $pid,
-                        'product_name'  => $product['product_name'],
-                        'remaining_qty' => $new_qty,
-                        'alert_type'    => 'LOW_STOCK_WARNING',
-                        'timestamp'     => date('Y-m-d H:i:s')
+                        'event'             => 'low_stock_alert',
+                        'telegram_message'  => $exact_message
                     ];
                     triggerMakeWebhook($payload);
                 }
@@ -295,12 +295,8 @@ if ($action === 'run_audit_sweep') {
 
     if ($new_tampers_found && count($tampered_transactions) > 0) {
         $payload = [
-            'event'          => 'critical_tamper_alert',
-            'broadcast_all'  => true,
-            'tampered_txns'  => implode(", ", $tampered_transactions),
-            'alert_type'     => 'SECURITY_BREACH_DETECTED',
-            'timestamp'      => date('Y-m-d H:i:s'),
-            'trigger_ip'     => $_SERVER['REMOTE_ADDR']
+            'event'             => 'critical_tamper_alert',
+            'telegram_message'  => 'SECURITY BREACH: Tampering detected on transactions: ' . implode(", ", $tampered_transactions)
         ];
         triggerMakeWebhook($payload);
     }
@@ -361,12 +357,10 @@ if ($action === 'ai_instant_restock' && $_SESSION['role'] === 'Admin') {
 
         $pdo->commit();
 
+        $p_name = strtoupper($product['product_name']);
         $payload = [
-            'event'         => 'ai_alert_trigger',
-            'product_name'  => $product['product_name'] ?? 'Unknown Product', 
-            'current_stock' => (int)(($product['quantity'] ?? 0) + $quantity_to_add),
-            'alert_type'    => 'AI_INSTANT_RESTOCK_EXECUTED',
-            'timestamp'     => date('Y-m-d H:i:s')
+            'event'            => 'ai_alert_trigger',
+            'telegram_message' => "AI ACTION TAKEN: Instantly restocked {$quantity_to_add} units of {$p_name}."
         ];
         triggerMakeWebhook($payload);
 
@@ -393,12 +387,10 @@ if ($action === 'ai_profit_increase' && $_SESSION['role'] === 'Admin') {
 
         $pdo->commit();
 
+        $p_name = strtoupper($product['product_name']);
         $payload = [
-            'event'         => 'ai_alert_trigger',
-            'product_name'  => $product['product_name'] ?? 'Unknown Product', 
-            'current_stock' => (int)($product['quantity'] ?? 0),
-            'alert_type'    => 'AI_PROFIT_INCREASE_APPLIED',
-            'timestamp'     => date('Y-m-d H:i:s')
+            'event'            => 'ai_alert_trigger',
+            'telegram_message' => "AI ACTION TAKEN: Selling price increased by 5% for {$p_name}."
         ];
         triggerMakeWebhook($payload);
 
@@ -445,4 +437,3 @@ if (isset($_GET['logout'])) {
 header("Location: index.php");
 exit;
 ?>
-<!-- Forced Update 639221660619142074 -->
