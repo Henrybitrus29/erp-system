@@ -4,7 +4,7 @@ require 'db.php';
 
 $success_message = "";
 
-// 2. Listen for the Admin clicking 'Update & Alert'
+// 2. Listen for the Admin clicking 'Update'
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tamper_sale'])) {
     $sale_id_val = $_POST['sale_id'];
     $new_quantity = $_POST['quantity'];
@@ -15,8 +15,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tamper_sale'])) {
     $stmt->execute([$sale_id_val]);
     $old_sale = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 3. Update the database with the tampered numbers
-    $update_stmt = $pdo->prepare("UPDATE sales SET quantity = ?, total_price = ? WHERE sale_id = ?");
+    // 3. Update the database with the exact column names: quantity_sold and total_amount
+    $update_stmt = $pdo->prepare("UPDATE sales SET quantity_sold = ?, total_amount = ? WHERE sale_id = ?");
     $update_stmt->execute([$new_quantity, $new_price, $sale_id_val]);
 
     // 4. Construct the Telegram Tamper Alert Message
@@ -24,8 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['tamper_sale'])) {
     $telegram_message .= "A record in the Sales database was manually modified.\n\n";
     $telegram_message .= "Sale ID: " . $sale_id_val . "\n";
     $telegram_message .= "Product ID: " . ($old_sale['product_id'] ?? 'N/A') . "\n";
-    $telegram_message .= "Quantity Changed: " . $old_sale['quantity'] . " ➡️ " . $new_quantity . "\n";
-    $telegram_message .= "Price Changed: " . $old_sale['total_price'] . " ➡️ " . $new_price . "\n\n";
+    $telegram_message .= "Quantity Changed: " . $old_sale['quantity_sold'] . " ➡️ " . $new_quantity . "\n";
+    $telegram_message .= "Price Changed: " . $old_sale['total_amount'] . " ➡️ " . $new_price . "\n\n";
     $telegram_message .= "Timestamp: " . date('Y-m-d H:i:s');
 
     // 5. Fire the Webhook to Make.com
@@ -101,13 +101,13 @@ $sales = $sales_query->fetchAll(PDO::FETCH_ASSOC);
                             </td>
                             <td><?= htmlspecialchars($sale['product_id']) ?></td>
                             <td>
-                                <input type="number" name="quantity" value="<?= htmlspecialchars($sale['quantity_sold'] ?? $sale['quantity']) ?>" required>
+                                <input type="number" name="quantity" value="<?= htmlspecialchars($sale['quantity_sold']) ?>" required>
                             </td>
                             <td>
-                                <input type="number" name="total_price" step="0.01" value="<?= htmlspecialchars($sale['total_amount'] ?? $sale['total_price']) ?>" required>
+                                <input type="number" name="total_price" step="0.01" value="<?= htmlspecialchars($sale['total_amount']) ?>" required>
                             </td>
                             <td>
-                                <button type="submit" name="tamper_sale">Update & Alert</button>
+                                <button type="submit" name="tamper_sale">Update</button>
                             </td>
                         </form>
                     </tr>
