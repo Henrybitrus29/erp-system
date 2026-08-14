@@ -1,4 +1,4 @@
-﻿<?php ob_start(); session_start();
+<?php ob_start(); session_start();
 require 'db.php'; 
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 $pageTitle = 'Dashboard';
