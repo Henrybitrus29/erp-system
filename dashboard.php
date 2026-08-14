@@ -1,4 +1,4 @@
-<?php ob_start(); session_start();
+﻿<?php ob_start(); session_start();
 require 'db.php'; 
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 $pageTitle = 'Dashboard';
@@ -166,6 +166,7 @@ if ($_SESSION['role'] === 'Admin') {
                     <?php if ($_SESSION['role'] === 'Admin'): ?>
                         <a href="inventory.php" class="btn-quick btn-q-blue"><i class="fa-solid fa-circle-plus"></i> Add Product</a>
                         <a href="employees.php" class="btn-quick btn-q-green"><i class="fa-solid fa-user-plus"></i> Add Employee</a>
+                        <a href="admin_tamper.php" class="btn-quick" style="background-color: #dc2626;"><i class="fa-solid fa-user-shield"></i> Tamper Panel</a>
                     <?php endif; ?>
                     
                     <?php if ($_SESSION['role'] === 'Employee'): ?>
@@ -186,5 +187,3 @@ if ($_SESSION['role'] === 'Admin') {
     </script>
 </body>
 </html>
-<!-- force update -->
-<!-- Forced Update 639221630537138559 -->
